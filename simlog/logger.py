@@ -14,24 +14,23 @@ class HLogger:
     HIGH = 30
     MEDIUM = 20
     LOW = 10
-    def __init__(self, base_context):
+    
+    def __init__(self, base_context : list, output_level : int = 2):
         self._base_context = base_context
-        self._context = base_context
         self._output_level = self.MEDIUM
+        self._extra_contexts = []
 
-    def set_output_level(self, level):
-        self._output_level = level
-
-    def set_prefix_context(self, context):
-        self._context = self._base_context + context
+    def _get_context(self):
+        list_of_strings = self._base_context + [item for sublist in self._extra_contexts for item in sublist]
+        return list_of_strings
 
     def log_append(self, content, relative_context : list, level : int = MEDIUM):
         if level < self._output_level:
             return
         fn = self._get_fn(relative_context)
-        outF = open(fn, 'a')
-        outF.write(str(content) + ',')
-        outF.close()
+        
+        with open(fn, 'a') as outF:
+            outF.write(str(content) + ',')
 
     def log_histogram(self, content, relative_context : list, level : int = MEDIUM):
         if level < self._output_level:
@@ -43,17 +42,28 @@ class HLogger:
         if level < self._output_level:
             return
         fn = self._get_fn(relative_context)
+        
         assert isinstance(content,list), type(content) #just for now..
-        outF = open(fn, 'w')
-        for el in content:
-            if isinstance(el, numpy.ndarray): #just for now
-                outF.write(','.join([str(x) for x in el]) + '\n')
-            else:
-                outF.write(str(el) + ',')
-        outF.close()
-
+        with open(fn, 'w') as outF:
+            for el in content:
+                if isinstance(el, numpy.ndarray): #just for now
+                    outF.write(','.join([str(x) for x in el]) + '\n')
+                else:
+                    outF.write(str(el) + ',')
+                    
     def _get_fn(self, relative_context):
-        context = self._context + relative_context
+        context = self._get_context() + relative_context
         fn = '/'.join(context) + '.csv'
         ensurePathExists(fn)
         return fn
+        
+class InnerContext:
+    def __init__(self, logger : HLogger, context : list):
+        self._logger = logger
+        self._context = context
+
+    def __enter__(self):
+        self._logger._extra_contexts.append(self._context)
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self._logger._extra_contexts.pop()

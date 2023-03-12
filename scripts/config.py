@@ -1,4 +1,3 @@
-from simlog.logger import HLogger
+from simlog.logger import HLogger, InnerContext
 
-logger = HLogger(["fdrHackingResults"])
-logger.set_output_level( logger.LOW )
+logger = HLogger(["fdrHackingResults"], output_level = HLogger.LOW)

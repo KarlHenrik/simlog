@@ -4,6 +4,7 @@ from scipy.stats import ttest_ind
 import numpy as np
 
 from scripts.config import logger
+from simlog.logger import InnerContext
 
 
 def get_arrays():
